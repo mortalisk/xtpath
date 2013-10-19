@@ -6,9 +6,10 @@ Expression templates for C++11, giving an xpath like syntax for parsing xml or s
 Example
 -------
 To start, you first have to wrap a regular node in a Context-node:
-
-    auto doc = context(node);
-    
+```c++
+auto doc = context(node);
+```
 You can then start querying the document from this context node. Say you want to find a node "bird", which has a child node "appearance" with an attribute "color" set to "black":
-
-    auto black_bird = doc | child("bird") | where(child("appearance") | attribute("color", "black"))
+```c++
+auto black_bird = doc | child("bird") | where(child("appearance") | attribute("color", "black"))
+```
