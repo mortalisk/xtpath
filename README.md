@@ -32,7 +32,7 @@ auto doc = context(node);
 You can then start querying the document from this context node. Say you want to find the name of all birds with the color black:
 ```c++
 auto black_bird = doc | child("bird") | 
-                        where( child("appearance") | attribute("color", "black") ) |
+                          where( child("appearance") | attribute("color", "black") ) |
                         child("name") | text;
 ```
 
