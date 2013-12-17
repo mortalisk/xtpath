@@ -1,0 +1,14 @@
+boost_*.tar.bz2
+build/
+external/boost/
+external/boost_*/
+CMakeCache.txt
+CMakeFiles
+Makefile
+cmake_install.cmake
+*.a
+*.config
+*.creator
+*.creator.user
+*.files
+*.includes
