@@ -1,15 +1,48 @@
 xtpath
 ======
-
-Expression templates for C++11, giving an xpath like syntax for parsing xml or similar hierarchical documents. Xtpath can wrap any DOM-like library, and can add namespace support if needed. An adaptor class is provided for pugi-xml. You can easily create adaptor classes for other popular xml-parsers such as Xerces, or your own hierarchical document type and parser.
+XML access with namespaces in a clear and concise syntax for c++11.
 
 Example
 -------
-To start, you first have to wrap a regular node in a Context-node:
+We would like to parse the following xml:
+```xml
+<collection>
+  <bird>
+    <name>Raven</name>
+    <appearance color="black" size="medium">
+  </bird>
+  <bird>
+    <name>Albatross</name>
+    <appearance color="white" size="big">
+  </bird>
+  <bird>
+    <name>Blackbird</name>
+    <appearance color="black" size="small">
+  </bird>
+  <bird>
+    <name>Norwegian Blue</name>
+    <appearance color="blue" size="medium">
+  </bird>
+</collection>
+```
+To start, you first have to wrap a regular node (e.g. a pugi::xml_node) in a Context-node:
 ```c++
 auto doc = context(node);
 ```
-You can then start querying the document from this context node. Say you want to find a node "bird", which has a child node "appearance" with an attribute "color" set to "black":
+You can then start querying the document from this context node. Say you want to find the name of all birds with the color black:
 ```c++
-auto black_bird = doc | child("bird") | where(child("appearance") | attribute("color", "black"))
+auto black_bird = doc | child("bird") | 
+                        where( child("appearance") | attribute("color", "black") ) |
+                        child("name") | text;
 ```
+
+Some Advantages
+---------------
+1. Add support for namespaces where the underlying parser/DOM does not support it
+2. Make it easy to switch the underlying parser/DOM.
+3. Make your code easier to read.
+4. Type safe and efficient.
+
+Supported parsers
+-----------------
+Comes with Adaptor class for pugixml. You can easily create your own Adaptor classes for other parsers.
