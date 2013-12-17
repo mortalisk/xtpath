@@ -35,6 +35,11 @@ auto black_bird = doc | child("bird") |
                           where( child("appearance") | attribute("color", "black") ) |
                         child("name") | text;
 ```
+You may now iterate through the results:
+```c++
+for(std::string name: black_birds)
+    cout << name << "is a black bird\n";
+```
 
 Some Advantages
 ---------------
