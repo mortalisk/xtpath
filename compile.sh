@@ -5,5 +5,7 @@
 #g++ justpugi.cpp namespace_util.cpp -L. -lpugi -I. -std=c++11 -o justpugi -O3
 #g++ xtpathpugi.cpp -L. -lpugi -I. -std=c++11 -o xtpathpugi -O3
 
+export LD_RUN_PATH=external/boost/lib
+
 g++ test/test_xpath.cpp -Lexternal/boost/lib -L. -lpugixml -lboost_unit_test_framework -Iexternal/boost/include/ -Iexternal -I. -std=c++11 -o testpugi
 
