@@ -71,18 +71,19 @@ LDPATH="$LDPATH $PUGIXML_LDPATH"
 LIBS="$LIBS $PUGIXML_LIBS"
 CPPFLAGS="$CPPFLAGS $PUGIXML_CPPFLAGS"
 
-AC_CHECK_HEADER([pugixml/pugixml.hpp])
-AC_CHECK_LIB([pugixml], [main])
-AC_SUBST([PUGIXML_LDFLAGS])
-AC_SUBST([PUGIXML_LIBS])
-AC_SUBST([PUGIXML_CPPFLAGS])
-
+AC_CHECK_HEADER([pugixml.hpp],
+                [],
+                [AC_MSG_ERROR([Did not find the pugixml headers!])])
+AC_CHECK_LIB([pugixml], [main],
+             [],
+             [AC_MSG_ERROR([Did not find library pugixml!])])
 LDPATH="$oldLDPATH"
 LIBS="$oldLIBS"
 CPPFLAGS="$oldCPPFLAGS"
 
-
-
+AC_SUBST([PUGIXML_LDFLAGS])
+AC_SUBST([PUGIXML_LIBS])
+AC_SUBST([PUGIXML_CPPFLAGS])
 
 AC_CONFIG_FILES([Makefile
                  test/Makefile
