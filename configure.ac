@@ -13,6 +13,8 @@ AM_INIT_AUTOMAKE([1.13.4 foreign
                   -W -Wall])
 AM_SILENT_RULES([yes])
 
+PKG_INSTALLDIR
+
 AC_LANG_CPLUSPLUS
 AC_PROG_CXX
 AC_PROG_LIBTOOL
@@ -83,5 +85,6 @@ CPPFLAGS="$oldCPPFLAGS"
 
 
 AC_CONFIG_FILES([Makefile
-                 test/Makefile])
+                 test/Makefile
+                 xtpath.pc])
 AC_OUTPUT

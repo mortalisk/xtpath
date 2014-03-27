@@ -24,3 +24,5 @@ xtpath_HEADERS=					\
 	text_selector.hpp			\
 	xpath.hpp
 
+
+pkgconfig_DATA=xtpath.pc
