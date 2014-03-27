@@ -18,7 +18,7 @@
 #define MEDIASEQUENCER_PLUGIN_UTIL_XPATH_PUGI_ADAPTOR_HPP
 
 #include "xpath.hpp"
-#include <pugi/pugixml.hpp>
+#include <pugixml.hpp>
 #include <boost/range.hpp>
 #include <sstream>
 

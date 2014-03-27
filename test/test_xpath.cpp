@@ -19,7 +19,7 @@
 #include "../pugi_adaptor.hpp"
 
 
-#include <pugi/pugixml.hpp>
+#include <pugixml.hpp>
 
 #include <vector>
 
