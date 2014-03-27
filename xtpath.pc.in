@@ -10,4 +10,4 @@ Name: xtpath
 Description: XML access with namespaces in a clear and concise syntax for c++11
 Version: 0.1
 Cflags: -I${includedir} ${BOOST_CPPFLAGS} ${PUGIXML_CPPFLAGS}
-Libs: -L${libdir} ${PUGIXML_LDFLAGS} ${PUGIXML_LIBS}
+Libs: ${PUGIXML_LDFLAGS} ${PUGIXML_LIBS}
