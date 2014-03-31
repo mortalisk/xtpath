@@ -7,7 +7,7 @@ AC_INIT([xtpath], [0.1],
 AC_CONFIG_MACRO_DIR([config])
 AC_CONFIG_AUX_DIR([config])
 
-AM_INIT_AUTOMAKE([1.13.4 foreign
+AM_INIT_AUTOMAKE([1.13.3 foreign
                   dist-xz no-dist-gzip
                   color-tests parallel-tests
                   -W -Wall])

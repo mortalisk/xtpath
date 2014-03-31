@@ -25,6 +25,8 @@
 namespace mediasequencer { namespace plugin { namespace util { namespace xpath {
 
 struct PugiXmlAdaptor {
+    typedef pugi::xml_node node_type;
+  
     struct attribute_is_namespace {
         bool operator() (pugi::xml_attribute const& a) const {
             std::string name(a.name());
@@ -126,8 +128,8 @@ struct PugiXmlAdaptor {
     }
 };
 
-_context<pugi::xml_node, PugiXmlAdaptor> context(pugi::xml_node const &node) {
-    return _context<pugi::xml_node, PugiXmlAdaptor>(node);
+_context<PugiXmlAdaptor> context(pugi::xml_node const &node) {
+    return _context<PugiXmlAdaptor>(node);
 }
 }}}}
 

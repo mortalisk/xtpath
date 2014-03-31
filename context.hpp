@@ -30,7 +30,7 @@ using namespace boost::adaptors;
 
 // a context object holds a node (i.e. pugi::xml_node)
 // and uses an Adaptor to access it
-template <typename NodeType, typename Adaptor>
+template <typename Adaptor, typename NodeType = typename Adaptor::node_type>
 class _context
 {
 public:
