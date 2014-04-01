@@ -45,6 +45,9 @@ struct filtered_attribute_name {
 };
 
 struct filtered_attribute_name_and_value {
+
+    filtered_attribute_name_and_value() {}
+
     explicit filtered_attribute_name_and_value(std::string name, std::string value)
         : name(std::move(name)), value(std::move(value)) {
     }

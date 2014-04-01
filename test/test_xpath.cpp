@@ -15,6 +15,7 @@
  *
  */
 #include <boost/range/adaptor/filtered.hpp>
+#include <boost/range/distance.hpp>
 
 #include "../pugi_adaptor.hpp"
 
@@ -741,6 +742,31 @@ BOOST_AUTO_TEST_CASE(text_selector_contains)
     BOOST_REQUIRE(mosExternalMetadataContext.get_node());
     BOOST_CHECK_EQUAL(std::string("mosExternalMetadata"),
                       std::string(mosExternalMetadataContext.get_node().name()));
+}
+
+int count_ds(range<_context<PugiXmlAdaptor> > r) {
+  return boost::distance( r | child("d"));
+}
+
+BOOST_AUTO_TEST_CASE(type_erasure)
+{
+    xml_fixture xml_fixture(
+            "<a>"
+                "<b><d/><d/></b>"
+                "<c><d/><d/><d/></c>"
+		"<e><d/></e>"
+		"<d/>"
+		"<f><d/></f>"
+            "</a>");
+    pugi::xml_node root = xml_fixture.root();
+
+    auto node_range = singleton(context(root));
+    auto result_range =
+            node_range | child("c");
+
+    int count = count_ds(result_range);
+
+    BOOST_CHECK_EQUAL(count, 3);
 }
 
 

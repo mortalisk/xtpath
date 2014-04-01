@@ -52,6 +52,8 @@ public:
         : name(std::move(name)) {
     }
 
+    name_predicate() {}
+
 private:
     std::string name;
 

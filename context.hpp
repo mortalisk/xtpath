@@ -19,6 +19,7 @@
 
 #include <boost/range/adaptor/filtered.hpp>
 #include <boost/range/adaptor/transformed.hpp>
+#include <boost/range/any_range.hpp>
 #include "singleton_iterator.hpp"
 #include <deque>
 #include "scopedmap.hpp"
@@ -174,6 +175,14 @@ public:
 	return node.name();
     }
 
+};
+
+// erases the type of the actual range
+template <typename T>
+class range : public boost::any_range<T, boost::forward_traversal_tag, T&, boost::use_default> {
+public:
+  template<typename ActualRange>
+  range(ActualRange const& other) : boost::any_range<T, boost::forward_traversal_tag, T&, boost::use_default>(other) { }
 };
 
 }}}}
