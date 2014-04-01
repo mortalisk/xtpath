@@ -40,6 +40,18 @@ You may now iterate through the results:
 for(std::string name: black_birds)
     cout << name << "is a black bird\n";
 ```
+If you want to pass around the result ranges, you can use the range<T> template to avoid the long types of the actual ranges:
+```c++
+int count_blue(range<_context<PugiXmlAdaptor> > & all_birds) {
+  return boost::distance(all_birds | where( child("appearance") | attribute("color", "blue") ) );
+}
+
+void foo(range<_context<PugiXmlAdaptor> & collection) {
+  auto all_birds = collection | child("bird");
+  cout << "There are " << count_blue(all_birds) << " blue birds\n";
+}
+
+```
 
 Some Advantages
 ---------------
