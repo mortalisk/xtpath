@@ -1,19 +1,9 @@
-/*
- *   Copyright 2013 Morten Bendiksen (morten.bendiksen@gmail.com)
- *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
- *
- */
+
+//          Copyright Morten Bendiksen 2004 - 2006.
+// Distributed under the Boost Software License, Version 1.0.
+//    (See accompanying file LICENSE_1_0.txt or copy at
+//          http://www.boost.org/LICENSE_1_0.txt)
+
 #ifndef MEDIASEQUENCER_PLUGIN_UTIL_XPATH_ANCESTOR_SELECTOR_HPP
 #define MEDIASEQUENCER_PLUGIN_UTIL_XPATH_ANCESTOR_SELECTOR_HPP
 
@@ -38,6 +28,9 @@ struct filtered_ancestor {
     std::string name;
 };
 
+// the type for the ancestor selector
+// also defines the function for filtering
+// on name
 class _ancestor {
 public:
     filtered_ancestor operator()(std::string name) const {
@@ -46,33 +39,41 @@ public:
 };
 
 namespace {
+    /// The ancestor selector object. Can be used as a function
+    /// taking a name of the target ancestor. I.e. 'range | ancestor'
+    /// or 'range | ancestor("foo")'
     const _ancestor ancestor;
 }
 
+// the implementation of the pipe operator that takes
+// a range and an ancestor. E.g. 'range | ancestor'
 template <typename Range>
-auto
+boost::iterator_range<ancestor_iterator<typename Range::iterator> >
 operator|(Range const& range,
           _ancestor const&)
--> decltype(make_ancestor(range))
 {
     return make_ancestor(range);
 }
 
+// the implementation of the pipe operator that takes
+// a range and a filtered_ancestor. E.g. 'range | ancestor("foo")'
 template <typename Range>
-auto
+boost::range_detail::filtered_range
+<name_predicate<typename Range::iterator::reference>,
+ const boost::iterator_range<ancestor_iterator<typename Range::iterator> > >
 operator|(Range const& range,
           filtered_ancestor f)
--> decltype(make_ancestor(range)
-            | boost::adaptors::filtered(name_predicate<typename Range::iterator::reference>(std::move(f.name))))
 {
     return make_ancestor(range)
-            | boost::adaptors::filtered(name_predicate<typename Range::iterator::reference>(std::move(f.name)));
+            | boost::adaptors::filtered(name_predicate<typename Range::iterator::reference>(f.name));
 }
 
+// enables _ancestor type as a sub-expression
 template <>
 struct is_expr<_ancestor>: std::true_type {
 };
 
+// enables filtered_ancestor as a sub-expression
 template <>
 struct is_expr<filtered_ancestor>: std::true_type {
 };

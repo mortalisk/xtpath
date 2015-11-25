@@ -1,19 +1,9 @@
-/*
- *   Copyright 2013 Morten Bendiksen (morten.bendiksen@gmail.com)
- *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
- *
- */
+
+//          Copyright Morten Bendiksen 2004 - 2006.
+// Distributed under the Boost Software License, Version 1.0.
+//    (See accompanying file LICENSE_1_0.txt or copy at
+//          http://www.boost.org/LICENSE_1_0.txt)
+
 #ifndef MEDIASEQUENCER_PLUGIN_UTIL_XPATH_NAMESPACE_SELECTOR_HPP
 #define MEDIASEQUENCER_PLUGIN_UTIL_XPATH_NAMESPACE_SELECTOR_HPP
 
@@ -22,14 +12,11 @@
 
 namespace mediasequencer { namespace plugin { namespace util { namespace xpath {
 
+// A selector that represents the selection of a certain namespace
 struct filtered_namespace {
     explicit filtered_namespace(std::string s): ns(std::move(s)) {
     }
 
-    filtered_namespace(filtered_namespace&& other)
-        : ns(std::move(other.ns)) {
-
-    }
     filtered_namespace(filtered_namespace const& other)
         : ns(other.ns) {
     }
@@ -37,6 +24,7 @@ struct filtered_namespace {
     std::string ns;
 };
 
+// The type for the namespace selector
 struct _namespace {
     filtered_namespace operator()(std::string ns) const {
         return filtered_namespace(ns);
@@ -44,10 +32,17 @@ struct _namespace {
 };
 
 namespace {
+    /// The namespace selector. Gives the namespaces
+    /// of the nodes in the input range as pairs of strings
+    /// if used as is, i.e. 'range | ns'
+    /// Can be used as a function taking the target namespace,
+    /// i.e. 'range | ns("http://foo")'. Will then give the nodes
+    /// that are in the given namespace.
     const _namespace ns;
 }
 
-
+// Transforms a range of nodes to a range of the namespaces
+// they are in as strings.
 template<typename Element>
 struct node_to_namespace {
     typedef std::string result_type;
@@ -66,19 +61,12 @@ struct node_to_namespace {
     }
 };
 
-// A predicate for filtering on node namespace
+// A predicate for filtering out nodes that do not
+// have the given namespace
 class namespace_predicate {
 public:
     bool operator()(std::string i) const {
        return i == name;
-    }
-
-    namespace_predicate(namespace_predicate&& other)
-        : name(std::move(other.name)) {
-    }
-
-    namespace_predicate(namespace_predicate const& other)
-        : name(other.name) {
     }
 
     explicit namespace_predicate(std::string&& name)
@@ -90,29 +78,39 @@ private:
 
 };
 
+// enables the namespace selector in sub expressions
 template <>
 struct is_expr<_namespace>: std::true_type {
 };
 
+// enables filtering on namespaces in sub expressions
 template <>
 struct is_expr<filtered_namespace>: std::true_type {
 };
 
+
+// implements the pipe operator for the namespace selector
+// E.g. 'range | ns'
 template<typename Range>
-auto
+boost::range_detail::transformed_range
+<node_to_namespace<typename Range::iterator::reference>,
+ const Range>
 operator|(Range const& range, _namespace const&)
--> decltype(range |
-            boost::adaptors::transformed(node_to_namespace<typename Range::iterator::reference>()))
 {
     return range |
             boost::adaptors::transformed(node_to_namespace<typename Range::iterator::reference>());
 }
 
+// implements the pipe operator for the namespace selector
+// filtered on a specific namespace
+// E.g. 'range | ns("http://example.com")'
 template<typename Range>
-auto
+boost::range_detail::filtered_range
+<namespace_predicate,
+ const boost::range_detail::transformed_range
+ <node_to_namespace<typename Range::iterator::reference>,
+  const Range> >
 operator|(Range const& range, filtered_namespace f)
--> decltype(range | ns |
-            boost::adaptors::filtered(namespace_predicate(std::move(f.ns))))
 {
     return range | ns |
             boost::adaptors::filtered(namespace_predicate(std::move(f.ns)));

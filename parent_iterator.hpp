@@ -1,19 +1,9 @@
-/*
- *   Copyright 2013 Morten Bendiksen (morten.bendiksen@gmail.com)
- *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
- *
- */
+
+//          Copyright Morten Bendiksen 2004 - 2006.
+// Distributed under the Boost Software License, Version 1.0.
+//    (See accompanying file LICENSE_1_0.txt or copy at
+//          http://www.boost.org/LICENSE_1_0.txt)
+
 #ifndef MEDIASEQUENCER_PLUGIN_UTIL_XPATH_PARENT_ITERATOR
 #define MEDIASEQUENCER_PLUGIN_UTIL_XPATH_PARENT_ITERATOR
 
@@ -24,6 +14,9 @@
 
 namespace mediasequencer { namespace plugin { namespace util { namespace xpath {
 
+// An iterator over a range of context nodes. It is given another range
+// of nodes and iterates through the parents of all nodes in that
+// other range.
 template <typename ParentIterator>
 class parent_iterator : public boost::iterator_facade<
         parent_iterator<ParentIterator>,
@@ -37,60 +30,90 @@ private:
 public:
     parent_iterator() {}
 
-    parent_iterator(ParentIterator const& end)
-        : parent_it(end), parent_end(end) {};
-
-    parent_iterator(boost::iterator_range<ParentIterator> r)
-        :parent_it(r.begin()), parent_end(r.end()) {
-        if (parent_it != parent_end) {
-            c.reset(new typename super::value_type(*parent_it));
-            if (c->is_root()) {
+    parent_iterator(ParentIterator begin, ParentIterator end) {
+        if (begin != end) {
+            d.reset(new data(std::move(begin), std::move(end)));
+            d->c.reset(new typename super::value_type(*(d->parent_it)));
+            if (d->c->is_root()) {
                 increment();
             } else {
-                c->parent();
+                d->c->parent();
             }
         }
 
     };
 
-    parent_iterator(parent_iterator<ParentIterator> const& other):
-        parent_it(other.parent_it), parent_end(other.parent_end) {
-
-        if (other.c)
-            c.reset(new typename super::value_type(*other.c));
+    parent_iterator(parent_iterator<ParentIterator> const& other) {
+        if (other.d) {
+            d.reset(new data(*(other.d)));
+        }
     }
 
+    parent_iterator(parent_iterator<ParentIterator>&& other)
+        : d(std::move(other.d)) {
+    }
+
+    parent_iterator& operator=(parent_iterator<ParentIterator> const& other) {
+        if (other.d) {
+            d.reset(new data(*(other.d)));
+        } else {
+            d.reset();
+        }
+        return *this;
+    }
+
+    parent_iterator& operator=(parent_iterator<ParentIterator>&& other) {
+        d = std::move(other.d);
+        return *this;
+    }
 
     void increment() {
-        ++parent_it;
-        if (parent_it != parent_end) {
-            c.reset(new typename super::value_type (*parent_it));
-            if (c->is_root()) {
+        ++(d->parent_it);
+        if (d->parent_it != d->parent_end) {
+            d->c.reset(new typename super::value_type(*(d->parent_it)));
+            if (d->c->is_root()) {
                 increment();
             } else {
-                c->parent();
+                d->c->parent();
             }
         } else {
-            c.reset();
+            d.reset();
         }
     }
 
     bool equal(parent_iterator const& other) const {
-        if (!this->c || !other.c) {
-            return (!this->c && !other.c);
+        if (!d || !other.d) {
+            return d.get() == other.d.get();
         }
-        return  *(this->c) == *(other.c) &&
-                this->parent_it == other.parent_it &&
-                this->parent_end == other.parent_end;
+        assert(d->c && other.d->c);
+        return
+            *(d->c) == *(other.d->c) &&
+            d->parent_it == other.d->parent_it &&
+            d->parent_end == other.d->parent_end;
     }
 
     typename super::reference dereference() const {
-        return *c;
+        return *(d->c);
     }
 private:
-    ParentIterator parent_it;
-    ParentIterator parent_end;
-    std::shared_ptr<typename super::value_type> c;
+    struct data {
+        data(ParentIterator parent_it,
+             ParentIterator parent_end)
+            : parent_it(parent_it),
+              parent_end(parent_end),
+              c(std::make_shared<typename super::value_type>(*parent_it)) {
+        }
+        data(data const& other)
+            : parent_it(other.parent_it),
+              parent_end(other.parent_end),
+              c(std::make_shared<typename super::value_type>(*(other.c))) {
+        }
+        ParentIterator parent_it;
+        ParentIterator parent_end;
+        std::shared_ptr<typename super::value_type> c;
+    };
+
+    std::unique_ptr<data> d;
 };
 
 
@@ -99,8 +122,8 @@ template <typename Range>
 boost::iterator_range<parent_iterator<typename Range::iterator> >
 make_parent(Range const& r) {
     return boost::make_iterator_range
-            (parent_iterator<typename Range::iterator>(r),
-             parent_iterator<typename Range::iterator>(r.end()));
+            (parent_iterator<typename Range::iterator>(r.begin(), r.end()),
+             parent_iterator<typename Range::iterator>());
 }
 
 }}}}

@@ -1,19 +1,9 @@
-/*
- *   Copyright 2013 Morten Bendiksen (morten.bendiksen@gmail.com)
- *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
- *
- */
+
+//          Copyright Morten Bendiksen 2004 - 2006.
+// Distributed under the Boost Software License, Version 1.0.
+//    (See accompanying file LICENSE_1_0.txt or copy at
+//          http://www.boost.org/LICENSE_1_0.txt)
+
 #ifndef MEDIASEQUENCER_PLUGIN_UTIL_XPATH_DESCENDANT_SELECTOR_HPP
 #define MEDIASEQUENCER_PLUGIN_UTIL_XPATH_DESCENDANT_SELECTOR_HPP
 
@@ -38,6 +28,7 @@ struct filtered_descendant {
     std::string name;
 };
 
+// The type for the decentand selector
 class _descendant {
 public:
     filtered_descendant operator()(std::string name) const {
@@ -46,35 +37,43 @@ public:
 };
 
 namespace {
+    /// The descendant selector gives all descendants of all
+    /// nodes in the input range, i.e. 'range | descendant'.
+    /// Can be used as a function taking the target descentant
+    /// name as input, i.e. 'range | descendant("foo")' to get
+    /// only the descendants with the name "foo".
     const _descendant descendant;
 }
 
+// Implements the pipe operator for the descendant selector
+// E.g. 'range | descendant'
 template <typename Range>
-auto
+boost::iterator_range<descendant_iterator<typename Range::iterator> >
 operator|(Range const& range,
           _descendant const&)
--> decltype(make_descendant(range))
 {
     return make_descendant(range);
 }
 
+// Implements the pipe operator for the descendant selector filtered
+// on name. E.g. 'range | descendant("foo")'
 template <typename Range>
-auto
+boost::range_detail::filtered_range
+<name_predicate<typename Range::iterator::reference>,
+ const boost::iterator_range<descendant_iterator<typename Range::iterator> > >
 operator|(Range const& range,
           filtered_descendant f)
-
--> decltype(make_descendant(range)
-            | boost::adaptors::filtered(name_predicate<typename Range::iterator::reference>(std::move(f.name))))
 {
     return make_descendant(range)
-            | boost::adaptors::filtered(name_predicate<typename Range::iterator::reference>(std::move(f.name)));
+            | boost::adaptors::filtered(name_predicate<typename Range::iterator::reference>(f.name));
 }
 
-
+// enables the descendant selector in sub expressions
 template <>
 struct is_expr<_descendant>: std::true_type {
 };
 
+// enables the descendant selector filtered on name in sub expressions
 template <>
 struct is_expr<filtered_descendant>: std::true_type {
 };

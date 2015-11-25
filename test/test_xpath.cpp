@@ -24,13 +24,12 @@
 
 #include <vector>
 
-
-#define BOOST_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Hello
 #include <boost/test/unit_test.hpp>
 
 using namespace mediasequencer::plugin::util::xpath;
+
 
 struct xml_fixture {
 
@@ -49,16 +48,9 @@ struct xml_fixture {
 
 template<typename ExpectedRange, typename NodeRange>
 void CHECK_EXPECTED_NAMES_RANGE_EQUAL_NODE_RANGE_NAMES(ExpectedRange expected_names, NodeRange nodes) {
-    auto iterator = nodes.begin();
-    for (auto& expected: expected_names) {
-        BOOST_REQUIRE(iterator != nodes.end());
-        auto& node = (*iterator).get_node();
-        BOOST_REQUIRE(node);
-        BOOST_CHECK_EQUAL(node.name(), expected);
-        ++iterator;
-    }
-
-    BOOST_CHECK(iterator == nodes.end());
+    auto range = (nodes|name);
+    BOOST_CHECK_EQUAL_COLLECTIONS(expected_names.begin(), expected_names.end(),
+                                  range.begin(), range.end());
 }
 
 
@@ -106,6 +98,21 @@ BOOST_AUTO_TEST_CASE(children_range)
 
     std::vector<std::string> expected_names = {"b", "c"};
     CHECK_EXPECTED_NAMES_RANGE_EQUAL_NODE_RANGE_NAMES(expected_names, result_range);
+
+}
+
+BOOST_AUTO_TEST_CASE(check_root)
+{
+    xml_fixture xml_fixture(
+            "<a xmlns=\"a:a\" xmlns:foo=\"b:b\">"
+                "<b><d/></b>"
+                "<c><e/></c>"
+            "</a>");
+    pugi::xml_node root = xml_fixture.root();
+
+    BOOST_CHECK(PugiXmlAdaptor::is_root(root) == true);
+
+    BOOST_CHECK(PugiXmlAdaptor::is_root(pugi::xml_node()) == false);
 
 }
 
@@ -228,6 +235,52 @@ BOOST_AUTO_TEST_CASE(pipe_operator_and_filter)
             node_range | child("c") | child("e") | child("f") | child("g");
 
     std::vector<std::string> expected_names = {"g", "g"};
+
+    CHECK_EXPECTED_NAMES_RANGE_EQUAL_NODE_RANGE_NAMES(expected_names, result_range);
+}
+
+BOOST_AUTO_TEST_CASE(children_of_children)
+{
+    xml_fixture xml_fixture(
+            "<a>"
+                "<z/>"
+                "<b>"
+                    "<d>"
+                        "<h>"
+                            "<i></i>"
+                            "<j></j>"
+                        "</h>"
+                    "</d>"
+                "</b>"
+                "<y/>"
+                "<c>"
+                    "<e>"
+                        "<f>"
+                            "<g></g>"
+                            "<k></k>"
+                        "</f>"
+                    "</e>"
+                    "<e>"
+                        "<f>"
+                            "<g></g>"
+                            "<k></k>"
+                        "</f>"
+                    "</e>"
+                    "<c>"
+                        "<g>"
+                            "<g></g>"
+                            "<k></k>"
+                        "</g>"
+                    "</c>"
+                "</c>"
+            "</a>");
+    pugi::xml_node root = xml_fixture.root();
+
+    auto node_range = singleton(context(root));
+    auto result_range =
+           node_range | child | child | child | child;
+
+    std::vector<std::string> expected_names = {"i", "j","g", "k","g", "k", "g", "k"};
 
     CHECK_EXPECTED_NAMES_RANGE_EQUAL_NODE_RANGE_NAMES(expected_names, result_range);
 }
@@ -660,6 +713,56 @@ BOOST_AUTO_TEST_CASE(attribute_selector_name_and_value)
 
 }
 
+BOOST_AUTO_TEST_CASE(sub_expressions_attribute_filtered)
+{
+    xml_fixture xml_fixture(
+            "<a>"
+                "<x a=\"b\" b=\"c\"/>"
+                "<y b=\"bar\" bar=\"baz\"/>"
+                "<z a=\"foo\" b=\"ar\"/>"
+                "<b b=\"baz\" bar=\"bar\"/>"
+                "<y b=\"bar\" bar=\"baz\"/>"
+            "</a>");
+    pugi::xml_node root = xml_fixture.root();
+
+    auto node_range = singleton(context(root));
+    auto result_range =
+            node_range | child | where( attribute("a") || attribute);
+
+    std::vector<std::string> expected_node_names =
+        {
+        "x", "y", "z", "b", "y"
+        };
+
+    CHECK_EXPECTED_NAMES_RANGE_EQUAL_NODE_RANGE_NAMES(expected_node_names, result_range);
+
+}
+
+BOOST_AUTO_TEST_CASE(sub_expressions_attribute)
+{
+    xml_fixture xml_fixture(
+            "<a>"
+                "<x a=\"b\" b=\"c\"/>"
+                "<y b=\"bar\" bar=\"baz\"/>"
+                "<z a=\"foo\" b=\"ar\"/>"
+                "<b b=\"baz\" bar=\"bar\"/>"
+                "<y b=\"bar\" bar=\"baz\"/>"
+            "</a>");
+    pugi::xml_node root = xml_fixture.root();
+
+    auto node_range = singleton(context(root));
+    auto result_range =
+            node_range | child | where( attribute );
+
+    std::vector<std::string> expected_node_names =
+        {
+        "x", "y", "z", "b", "y"
+        };
+
+    CHECK_EXPECTED_NAMES_RANGE_EQUAL_NODE_RANGE_NAMES(expected_node_names, result_range);
+
+}
+
 BOOST_AUTO_TEST_CASE(text_selector)
 {
     xml_fixture xml_fixture(
@@ -754,9 +857,9 @@ BOOST_AUTO_TEST_CASE(type_erasure)
             "<a>"
                 "<b><d/><d/></b>"
                 "<c><d/><d/><d/></c>"
-		"<e><d/></e>"
-		"<d/>"
-		"<f><d/></f>"
+        "<e><d/></e>"
+        "<d/>"
+        "<f><d/></f>"
             "</a>");
     pugi::xml_node root = xml_fixture.root();
 
@@ -767,6 +870,38 @@ BOOST_AUTO_TEST_CASE(type_erasure)
     int count = count_ds(result_range);
 
     BOOST_CHECK_EQUAL(count, 3);
+}
+
+BOOST_AUTO_TEST_CASE(weird_combinations)
+{
+    xml_fixture xml_fixture("<a><b><c xmlns=\"hei\" hei=\"foo\"></c></b></a>");
+    pugi::xml_node root = xml_fixture.root();
+
+    auto c = context(root);
+    auto i = c.begin();
+    while(i != c.end()) {
+        auto r = *i;
+        if ( (r
+              |descendant
+              |ancestor
+              |ancestor("a")
+              |child
+              |child("c")
+              |parent
+              |parent("a")
+              |descendant
+                |where(child)
+              |descendant("c")
+                |where (ns("hei") || attribute("hei"))
+              |name
+              |first)
+              == "c") {
+            BOOST_CHECK(true);
+        } else {
+            BOOST_CHECK(false);
+        }
+        i++;
+    }
 }
 
 

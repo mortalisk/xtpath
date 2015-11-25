@@ -1,19 +1,9 @@
-/*
- *   Copyright 2013 Morten Bendiksen (morten.bendiksen@gmail.com)
- *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
- *
- */
+
+//          Copyright Morten Bendiksen 2004 - 2006.
+// Distributed under the Boost Software License, Version 1.0.
+//    (See accompanying file LICENSE_1_0.txt or copy at
+//          http://www.boost.org/LICENSE_1_0.txt)
+
 #ifndef MEDIASEQUENCER_PLUGIN_UTIL_XPATH_ATTRIBUTE_SELECTOR_HPP
 #define MEDIASEQUENCER_PLUGIN_UTIL_XPATH_ATTRIBUTE_SELECTOR_HPP
 
@@ -23,6 +13,8 @@
 
 namespace mediasequencer { namespace plugin { namespace util { namespace xpath {
 
+// Predicate that is used to filter out attributes which does not have
+// the given name
 struct filtered_attribute_name {
     explicit filtered_attribute_name(std::string name): name(std::move(name)) {
     }
@@ -35,15 +27,22 @@ struct filtered_attribute_name {
         : name(other.name) {
     }
 
+    filtered_attribute_name& operator=(filtered_attribute_name const& other) {
+        name = other.name;
+        return *this;
+    }
+
     typedef bool return_type;
 
-    bool operator()(std::pair<std::string, std::string> const& pair){
+    bool operator()(std::pair<std::string, std::string> const& pair) const {
         return pair.first == name;
     }
 
     std::string name;
 };
 
+// Predicate that is used to filter out attributes which does not have
+// the given name and value
 struct filtered_attribute_name_and_value {
 
     filtered_attribute_name_and_value() {}
@@ -68,8 +67,8 @@ struct filtered_attribute_name_and_value {
 
     typedef bool return_type;
 
-    template <typename T, typename U>
-    bool operator()(_context<T, U> const& s) const {
+    template <typename C>
+    bool operator()(C const& s) const {
         return s.attribute(name) == value;
     }
 
@@ -77,6 +76,7 @@ struct filtered_attribute_name_and_value {
     std::string value;
 };
 
+// type for attribute selector
 class _attribute {
 public:
     filtered_attribute_name operator()(std::string name) const {
@@ -90,17 +90,29 @@ public:
 };
 
 namespace {
+    /// selector object for attribute.  Can be used as a function
+    /// taking a name of the target attribute, or the name and value.
+    /// 'range | attribute' gives all attributes defined on the
+    /// input range as pairs of strings
+    /// 'range | attribute("foo")' gives the values of the
+    /// attributes with the name 'foo'
+    /// 'range | attribute("foo", "bar")' gives the nodes that
+    /// have the attributes 'foo' set to the value 'bar'
     const _attribute attribute;
 }
 
+// Implements the pipe operator for attributes. E.g.
+// 'range | attributes'
 template <typename Range>
-auto
-operator|(Range range, _attribute)
--> decltype(make_attributes(range))
+boost::iterator_range<attribute_iterator<typename Range::iterator> >
+operator|(Range const& range, _attribute)
 {
     return make_attributes(range);
 }
 
+// Used to transform a range of pairs of strings to a range of strings.
+// The strings will be the second value from the pairs.
+// Used to extract only the values of a range of attributes.
 struct second_of_pair {
     typedef std::string result_type;
 
@@ -112,23 +124,44 @@ struct second_of_pair {
     }
 };
 
+// Implements the pipe operator for attributes filtered on name. E.g.
+// 'range | attributes("foo")'
 template <typename Range>
-auto
-operator|(Range range, filtered_attribute_name f)
--> decltype(make_attributes(range) | boost::adaptors::filtered(f) |
-            boost::adaptors::transformed(second_of_pair()))
+boost::range_detail::transformed_range
+<second_of_pair,
+ const boost::range_detail::filtered_range
+ <filtered_attribute_name,
+  const boost::iterator_range<attribute_iterator<typename Range::iterator> > > >
+operator|(Range const& range, filtered_attribute_name f)
 {
     return make_attributes(range) | boost::adaptors::filtered(f) |
             boost::adaptors::transformed(second_of_pair());
 }
 
+// Implements the pipe operator for attributes filtered on name and value. E.g.
+// 'range | attributes("foo", "bar")'
 template <typename Range>
-auto
-operator|(Range range, filtered_attribute_name_and_value f)
--> decltype(range | boost::adaptors::filtered(f))
+boost::range_detail::filtered_range<filtered_attribute_name_and_value,
+                                    const Range>
+operator|(Range const& range, filtered_attribute_name_and_value f)
 {
     return range | boost::adaptors::filtered(f);
 }
+
+// enables the selector for attributes filtered on name and value
+template <>
+struct is_expr<filtered_attribute_name_and_value>: std::true_type {
+};
+
+// enables the selector for attributes filtered on name
+template <>
+struct is_expr<filtered_attribute_name>: std::true_type {
+};
+
+// enables the selector for attributes
+template <>
+struct is_expr<_attribute>: std::true_type {
+};
 
 }}}}
 

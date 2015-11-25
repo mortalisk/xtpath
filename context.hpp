@@ -1,19 +1,9 @@
-/*
- *   Copyright 2013 Morten Bendiksen (morten.bendiksen@gmail.com)
- *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
- *
- */
+
+//          Copyright Morten Bendiksen 2004 - 2006.
+// Distributed under the Boost Software License, Version 1.0.
+//    (See accompanying file LICENSE_1_0.txt or copy at
+//          http://www.boost.org/LICENSE_1_0.txt)
+
 #ifndef MEDIASEQUENCER_PLUGIN_UTIL_XPATH_CONTEXT_HPP
 #define MEDIASEQUENCER_PLUGIN_UTIL_XPATH_CONTEXT_HPP
 
@@ -35,11 +25,11 @@ template <typename Adaptor, typename NodeType = typename Adaptor::node_type>
 class _context
 {
 public:
-    typedef singleton_iterator<_context<NodeType, Adaptor> > iterator;
-    typedef const singleton_iterator<_context<NodeType, Adaptor> > const_iterator;
+    typedef singleton_iterator<_context<Adaptor> > iterator;
+    typedef singleton_iterator<_context<Adaptor> > const_iterator;
     typedef NodeType node_type;
     typedef Adaptor adaptor;
-    typedef decltype(Adaptor::attributes(NodeType())) AttributeRange;
+    typedef typename Adaptor::attribute_range AttributeRange;
     typedef typename AttributeRange::iterator AttributeIterator;
 private:
     NodeType node;
@@ -172,12 +162,15 @@ public:
     }
 
     std::string name() const {
-	return node.name();
+        return node.name();
     }
 
 };
 
-// erases the type of the actual range
+/// Erases the type of the actual range. This enables conversion
+/// from any result range from any query to this type which hides
+/// the actual type. This is useful for example as function
+/// parameter types, instead of using a template function everywhere.
 template <typename T>
 class range : public boost::any_range<T, boost::forward_traversal_tag, T&, boost::use_default> {
 public:

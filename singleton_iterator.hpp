@@ -1,19 +1,9 @@
-/*
- *   Copyright 2013 Morten Bendiksen (morten.bendiksen@gmail.com)
- *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
- *
- */
+
+//          Copyright Morten Bendiksen 2004 - 2006.
+// Distributed under the Boost Software License, Version 1.0.
+//    (See accompanying file LICENSE_1_0.txt or copy at
+//          http://www.boost.org/LICENSE_1_0.txt)
+
 #ifndef MEDIASEQUENCER_PLUGIN_UTIL_XPATH_SINGLETON_ITERATOR
 #define MEDIASEQUENCER_PLUGIN_UTIL_XPATH_SINGLETON_ITERATOR
 
@@ -23,6 +13,8 @@
 
 namespace mediasequencer { namespace plugin { namespace util { namespace xpath {
 
+// An iterator over a single node. It is given one node and the first increment
+// will take it past the end.
 template <typename Element>
 class singleton_iterator : public boost::iterator_facade<singleton_iterator<Element>,
        Element, boost::forward_traversal_tag> {
@@ -31,6 +23,20 @@ public:
 
     singleton_iterator(singleton_iterator const& other)
         : context(other.context) {};
+
+
+    singleton_iterator(singleton_iterator&& other)
+        : context(std::move(other.context)) {};
+
+    singleton_iterator operator=(singleton_iterator const& other) {
+        context = other.context;
+        return *this;
+    }
+
+    singleton_iterator operator=(singleton_iterator&& other) {
+        context = std::move(other.context);
+        return *this;
+    }
 
     explicit singleton_iterator(Element&& context)
         : context(new Element(std::move(context))) {}

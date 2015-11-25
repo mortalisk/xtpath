@@ -1,19 +1,9 @@
-/*
- *   Copyright 2013 Morten Bendiksen (morten.bendiksen@gmail.com)
- *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
- *
- */
+
+//          Copyright Morten Bendiksen 2004 - 2006.
+// Distributed under the Boost Software License, Version 1.0.
+//    (See accompanying file LICENSE_1_0.txt or copy at
+//          http://www.boost.org/LICENSE_1_0.txt)
+
 #ifndef MEDIASEQUENCER_PLUGIN_UTIL_XPATH_ATTRIBUTE_ITERATOR_HPP
 #define MEDIASEQUENCER_PLUGIN_UTIL_XPATH_ATTRIBUTE_ITERATOR_HPP
 
@@ -24,6 +14,9 @@
 
 namespace mediasequencer { namespace plugin { namespace util { namespace xpath {
 
+// An iterator over a range of attributes. It is given a range
+// of nodes and iterates through all attributes of all nodes in that
+// other range.
 template <typename ParentIterator>
 class attribute_iterator : public boost::iterator_facade<
         attribute_iterator<ParentIterator>,
@@ -38,8 +31,8 @@ public:
     attribute_iterator(ParentIterator const& end)
         : parent_it(end), parent_end(end) {}
 
-    attribute_iterator(boost::iterator_range<ParentIterator> r)
-        :parent_it(r.begin()), parent_end(r.end()) {
+    attribute_iterator(ParentIterator begin, ParentIterator end)
+        :parent_it(begin), parent_end(end) {
         if (parent_it != parent_end) {
             auto attributes = (*parent_it).attributes();
             attribute_it = attributes.begin();
@@ -98,7 +91,7 @@ template <typename Range>
 boost::iterator_range<attribute_iterator<typename Range::iterator> >
 make_attributes(Range const& r) {
     return boost::make_iterator_range
-            (attribute_iterator<typename Range::iterator>(r),
+            (attribute_iterator<typename Range::iterator>(r.begin(), r.end()),
              attribute_iterator<typename Range::iterator>(r.end()));
 }
 

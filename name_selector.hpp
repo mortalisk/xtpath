@@ -1,19 +1,9 @@
-/*
- *   Copyright 2013 Morten Bendiksen (morten.bendiksen@gmail.com)
- *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
- *
- */
+
+//          Copyright Morten Bendiksen 2004 - 2006.
+// Distributed under the Boost Software License, Version 1.0.
+//    (See accompanying file LICENSE_1_0.txt or copy at
+//          http://www.boost.org/LICENSE_1_0.txt)
+
 #ifndef MEDIASEQUENCER_PLUGIN_UTIL_XPATH_NAME_SELECTOR_HPP
 #define MEDIASEQUENCER_PLUGIN_UTIL_XPATH_NAME_SELECTOR_HPP
 
@@ -21,14 +11,20 @@
 
 namespace mediasequencer { namespace plugin { namespace util { namespace xpath {
 
+// The type for the name selector
 class _name {
 
 };
 
 namespace {
+    /// The name selector gives the name of all nodes
+    /// in the input range in a range of strings
     const _name name;
 }
 
+// Used in a boost transformed_range to transform from
+// a range of context nodes to a range of strings
+// that are the names of the nodes
 template<typename Element>
 struct node_to_name {
     typedef std::string result_type;
@@ -42,14 +38,18 @@ struct node_to_name {
     }
 };
 
+// enables the name selector in sub expressions
 template <>
 struct is_expr<_name>: std::true_type {
 };
 
+// Implements the pipe operator for the name selector.
+// E.g. 'range | name'
 template<typename Range>
-auto
+boost::range_detail::transformed_range
+<node_to_name<typename Range::iterator::reference>,
+ const Range>
 operator|(Range const& range, _name const&)
-->  decltype(range |transformed(node_to_name<typename Range::iterator::reference>()))
 {
     return range |transformed(node_to_name<typename Range::iterator::reference>());
 }
